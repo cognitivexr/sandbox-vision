@@ -1,7 +1,9 @@
 import time
 
+
 class Timer():
     """Utility function to track the execution times"""
+
     def __init__(self):
         self._start_time = None
         self._count = 0
@@ -26,17 +28,18 @@ class Timer():
         self._elapsed_time = elapsed_time
         self._start_time = None
         self._count = self._count+1
-        if elapsed_time>self._longest:
-            self._longest=elapsed_time
-        if elapsed_time<self._shortest:
-            self._shortest=elapsed_time
-        self._average=((self._count-1)/self._count)*self._average+(1/self._count)*elapsed_time
+        if elapsed_time > self._longest:
+            self._longest = elapsed_time
+        if elapsed_time < self._shortest:
+            self._shortest = elapsed_time
+        self._average = ((self._count-1)/self._count) * \
+            self._average+(1/self._count)*elapsed_time
         self.fps = 1/self._average
-    
+
     def print_summary(self):
         self.fps = 1/self._average
         print(f'time: {self._elapsed_time} fps: {self.fps} average: {self._average} shortest: {self._shortest} longest: {self._longest} count: {self._count}')
 
+
 class TimerError(Exception):
     """A custom exception used to report errors in use of Timer class"""
-
