@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 res/*
+
+*.mp4
+!res/dataset*

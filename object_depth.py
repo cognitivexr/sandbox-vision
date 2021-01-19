@@ -22,6 +22,17 @@ def plot_one_box(x, img, color=(0, 255, 0), label=None, line_thickness=None):
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3,
                     [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
+cap = cv2.VideoCapture('res/dataset1.mp4')
+timer_yolo = Timer('res/yolo.csv')
+timer_adabins = Timer('res/adabins.csv')
+tl = 2
+
+threshold = 0.25
+width = cap.get(3)   # float `width`
+height = cap.get(4)  # float `height`
+print(f'width: {width} height: {height}')
+out = cv2.VideoWriter('depth_resut.mp4', cv2.VideoWriter_fourcc(
+    'm', 'p', '4', 'v'), 20, (640, 480))
 
 # %%
 # Model
@@ -35,17 +46,6 @@ colors = [[random.randint(0, 255) for _ in range(3)] for _ in names]
 inferHelper = InferenceHelper()
 
 # %%
-cap = cv2.VideoCapture('res/webcam_data.mp4')
-timer_yolo = Timer()
-timer_adabins = Timer()
-tl = 2
-
-threshold = 0.25
-width = cap.get(3)   # float `width`
-height = cap.get(4)  # float `height`
-out = cv2.VideoWriter('depth_resut.mp4', cv2.VideoWriter_fourcc(
-    'm', 'p', '4', 'v'), 20, (640, 480))
-
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -102,7 +102,8 @@ while True:
     # final[mask] = depth_rgb[mask]
     # final[~mask] = frame[~mask]
 
-    depth_rgb = cv2.cvtColor(depth_img, cv2.COLOR_GRAY2RGB)
+    depth_rgb = cv2.cvtColor((depth_img*255).astype(np.uint8),
+                              cv2.COLOR_GRAY2BGR)
 
     # threshold results
     print(results.shape)
@@ -128,10 +129,12 @@ while True:
         cv2.putText(frame, label, (c1[0], c1[1] - 2), 0, tl / 3,
                     [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
-    # stack = np.hstack((frame, depth_rgb))
+    # stack = np.hstack((frame, depth_rgb*255))
     cv2.imshow('frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     out.write(frame)
 cap.release()
 out.release()
+timer_adabins.release()
+timer_yolo.release()

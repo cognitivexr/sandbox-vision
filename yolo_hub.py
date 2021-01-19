@@ -4,11 +4,11 @@ from util.timer import Timer
 import numpy as np
 
 # Model
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
+model = torch.hub.load('ultralytics/yolov5', 'yolov5x',
                        pretrained=True).autoshape()  # for PIL/cv2/np inputs and NMS
 
 # Inference
-cap = cv2.VideoCapture('https://192.168.0.164:8080/video')
+cap = cv2.VideoCapture('res/dataset2.mp4')
 timer = Timer()
 while True:
     ret, frame = cap.read()

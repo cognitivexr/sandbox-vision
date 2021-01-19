@@ -4,7 +4,7 @@ import time
 class Timer():
     """Utility function to track the execution times"""
 
-    def __init__(self):
+    def __init__(self, path='res/result.csv'):
         self._start_time = None
         self._count = 0
         self._average = 0
@@ -12,6 +12,8 @@ class Timer():
         self._shortest = float('inf')
         self._elapsed_time = 0
         self.fps = 0
+        self.file = open(path, 'w')
+        self.file.write('elapsed time,average time,average fps\n')
 
     def start(self):
         """Start the timer"""
@@ -28,6 +30,7 @@ class Timer():
         self._elapsed_time = elapsed_time
         self._start_time = None
         self._count = self._count+1
+
         if elapsed_time > self._longest:
             self._longest = elapsed_time
         if elapsed_time < self._shortest:
@@ -35,6 +38,10 @@ class Timer():
         self._average = ((self._count-1)/self._count) * \
             self._average+(1/self._count)*elapsed_time
         self.fps = 1/self._average
+        self.file.write(f'{elapsed_time},{self._average},{self.fps}\n')
+
+    def release(self):
+        self.file.close()
 
     def print_summary(self):
         self.fps = 1/self._average
