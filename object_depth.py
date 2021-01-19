@@ -40,23 +40,17 @@ timer_yolo = Timer()
 timer_adabins = Timer()
 tl = 2
 
+threshold = 0.25
 width = cap.get(3)   # float `width`
 height = cap.get(4)  # float `height`
-out = cv2.VideoWriter('depth_resutl.mp4', cv2.VideoWriter_fourcc(
-    'H', '2', '6', '4'), 20, (640, 480))
-
-names = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',
-         'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
-         'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
-         'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard',
-         'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
-         'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
-         'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone',
-         'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear',
-         'hair drier', 'toothbrush']
+out = cv2.VideoWriter('depth_resut.mp4', cv2.VideoWriter_fourcc(
+    'm', 'p', '4', 'v'), 20, (640, 480))
 
 while True:
     ret, frame = cap.read()
+    if not ret:
+        break
+
     frame_rgb = frame[:, :, ::-1]
 
     # depth prediction
@@ -109,6 +103,11 @@ while True:
     # final[~mask] = frame[~mask]
 
     depth_rgb = cv2.cvtColor(depth_img, cv2.COLOR_GRAY2RGB)
+
+    # threshold results
+    print(results.shape)
+    mask = results[:, 4] > threshold  # check confidence
+    results = results[:][mask]
 
     for x in results:
         c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
