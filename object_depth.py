@@ -22,17 +22,17 @@ def plot_one_box(x, img, color=(0, 255, 0), label=None, line_thickness=None):
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3,
                     [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
-cap = cv2.VideoCapture('res/dataset1.mp4')
+cap = cv2.VideoCapture('res/dataset4.mp4')
 timer_yolo = Timer('res/yolo.csv')
 timer_adabins = Timer('res/adabins.csv')
 tl = 2
 
-threshold = 0.25
+threshold = 0.4
 width = cap.get(3)   # float `width`
 height = cap.get(4)  # float `height`
 print(f'width: {width} height: {height}')
-out = cv2.VideoWriter('depth_resut.mp4', cv2.VideoWriter_fourcc(
-    'm', 'p', '4', 'v'), 20, (640, 480))
+out = cv2.VideoWriter('depth_result.mp4', cv2.VideoWriter_fourcc(
+    'm', 'p', '4', 'v'), 20, (1280, 480))
 
 # %%
 # Model
@@ -103,7 +103,11 @@ while True:
     # final[mask] = depth_rgb[mask]
     # final[~mask] = frame[~mask]
 
-    depth_rgb = cv2.cvtColor((depth_img*255).astype(np.uint8),
+    min_depth = np.min(depth_img)
+    max_depth = np.max(depth_img)
+    depth_rgb = depth_img.copy()
+    depth_rgb = (depth_rgb-min_depth)/(max_depth-min_depth)
+    depth_rgb = cv2.cvtColor((depth_rgb*255).astype(np.uint8),
                               cv2.COLOR_GRAY2BGR)
 
     # threshold results
@@ -111,6 +115,9 @@ while True:
     results = results[:][mask]
 
     for x in results:
+        if names[int(x[5])] not in ['keyboard', 'mouse', 'bottle']:
+            continue
+        
         c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
 
         # average depth
@@ -129,11 +136,11 @@ while True:
         cv2.putText(frame, label, (c1[0], c1[1] - 2), 0, tl / 3,
                     [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
-    # stack = np.hstack((frame, depth_rgb*255))
-    cv2.imshow('frame', frame)
+    stack = np.hstack((frame, depth_rgb*255))
+    cv2.imshow('frame', stack)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-    out.write(frame)
+    out.write(stack)
 cap.release()
 out.release()
 timer_adabins.release()

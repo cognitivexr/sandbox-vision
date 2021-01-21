@@ -13,7 +13,7 @@ class Timer():
         self._elapsed_time = 0
         self.fps = 0
         self.file = open(path, 'w')
-        self.file.write('elapsed time,average time,average fps\n')
+        self.file.write('elapsed time\n')
 
     def start(self):
         """Start the timer"""
@@ -38,7 +38,7 @@ class Timer():
         self._average = ((self._count-1)/self._count) * \
             self._average+(1/self._count)*elapsed_time
         self.fps = 1/self._average
-        self.file.write(f'{elapsed_time},{self.fps},{self._average}\n')
+        self.file.write(f'{elapsed_time}\n')
 
     def release(self):
         self.file.close()
