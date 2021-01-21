@@ -132,3 +132,4 @@ res/*
 
 *.mp4
 !res/dataset*
+*.pt
