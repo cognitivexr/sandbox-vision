@@ -50,11 +50,12 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
-
+        
     frame_rgb = frame[:, :, ::-1]
 
     # depth prediction
     timer_adabins.start()
+
     img_pil = Image.fromarray(frame_rgb)
     centers, pred = inferHelper.predict_pil(img_pil)
     depth_img = pred[0, 0]
@@ -106,7 +107,6 @@ while True:
                               cv2.COLOR_GRAY2BGR)
 
     # threshold results
-    print(results.shape)
     mask = results[:, 4] > threshold  # check confidence
     results = results[:][mask]
 
