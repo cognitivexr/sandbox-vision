@@ -38,7 +38,7 @@ class Timer():
         self._average = ((self._count-1)/self._count) * \
             self._average+(1/self._count)*elapsed_time
         self.fps = 1/self._average
-        self.file.write(f'{elapsed_time},{self._average},{self.fps}\n')
+        self.file.write(f'{elapsed_time},{self.fps},{self._average}\n')
 
     def release(self):
         self.file.close()
