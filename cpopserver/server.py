@@ -11,10 +11,11 @@ LOG = logging.getLogger(__name__)
 THREADS = []
 
 
-class CPOPServer:
+class CPOPPublisher:
+    """ Publisher that publishes CPOP events to the pub/sub broker """
 
-    def start(self):
-        print('TODO - start server')
+    def publish_event(self, event):
+        print('TODO - publish event message: %s' % event)
 
 
 def start_mqtt_broker():
@@ -47,7 +48,6 @@ def install_mqtt():
 
 def startup_servers():
     start_mqtt_broker()
-    CPOPServer().start()
 
 
 def shutdown_servers():
