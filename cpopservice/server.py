@@ -14,6 +14,7 @@ from cpopservice.utils.common import (
 
 LOG = logging.getLogger(__name__)
 THREADS = []
+LOCAL_HOSTS = ['localhost', '0.0.0.0', '127.0.0.1']
 
 
 class CPOPServer(FuncThread):
@@ -58,6 +59,9 @@ def get_capture_device():
 
 
 def start_mqtt_broker():
+    broker_host = config.BROKER_HOST
+    if not config.BROKER_STARTUP or broker_host not in LOCAL_HOSTS:
+        return
     mosquitto_bin = install_mqtt()
     LOG.info('Starting MQTT broker on port %s' % config.BROKER_PORT)
     t = ShellCommandThread('%s -p %s' % (mosquitto_bin, config.BROKER_PORT))
