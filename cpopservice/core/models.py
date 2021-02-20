@@ -2,6 +2,9 @@ import bson
 
 
 class BaseModel(object):
+    def __init__(self, params={}):
+        self.__dict__ = params
+
     def to_bson(self):
         result = bson.dumps(self.__dict__)
         return result
@@ -20,6 +23,14 @@ class BaseModel(object):
         # TODO: implement hash function if needed
         return 0
 
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.__dict__)
+
 
 class Event(BaseModel):
+    # attributes: timestamp, shape (list of Coordinates), position (Coordinates)
+    pass
+
+
+class Coordinates(BaseModel):
     pass

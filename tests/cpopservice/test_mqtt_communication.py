@@ -1,10 +1,10 @@
 import queue
 import unittest
 import paho.mqtt.client as mqtt
-from cpopserver import config
-from cpopserver.core import models
-from cpopserver.server import startup_servers, shutdown_servers
-from cpopserver.utils.common import short_uid, FuncThread, retry
+from cpopservice import config
+from cpopservice.core import models
+from cpopservice.server import startup_servers, shutdown_servers
+from cpopservice.utils.common import short_uid, FuncThread, retry
 
 
 class TestCPOPServer(unittest.TestCase):
