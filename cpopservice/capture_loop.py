@@ -17,7 +17,12 @@ def run_capture_loop(capture, timer=None, result_queue=None, headless=True):
         timer and timer.stop()
         # depth_img = pred[0, 0]/10
         if result_queue:
-            message = {'timestamp': time(), 'x': 1, 'y': 2, 'z': 3}
+            message = {
+                'Timestamp': time(),
+                'Type': 'person',
+                'Position': {'X': 1, 'Y': 2, 'Z': 3},
+                'Shape': []
+            }
             result_queue.put(message)
         if not headless:
             cv2.imshow('frame', depth_img)
