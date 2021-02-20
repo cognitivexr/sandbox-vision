@@ -5,10 +5,10 @@ import tempfile
 
 # host and port of local MQTT broker
 BROKER_HOST = os.environ.get('BROKER_PORT') or 'localhost'
-BROKER_PORT = int(os.environ.get('BROKER_PORT') or 54321)
+BROKER_PORT = int(os.environ.get('BROKER_PORT') or 1883)
 
-# MQTT topic name (TODO: adjust)
-MQTT_TOPIC_NAME = 'test-topic'
+# MQTT topic name
+MQTT_TOPIC_NAME = 'cpop'
 
 # local folder to store temporary files
 TMP_FOLDER = os.path.join(tempfile.gettempdir(), 'cpopserver')
