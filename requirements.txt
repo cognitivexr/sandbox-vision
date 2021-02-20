@@ -28,3 +28,13 @@ pandas
 # extras --------------------------------------
 thop  # FLOPS computation
 pycocotools>=2.0  # COCO mAP
+
+# CPOP Server dependencies
+bson
+coverage
+flake8
+flake8-quotes
+nose
+nose-timer
+paho-mqtt>=1.5.1
+psutil
