@@ -28,7 +28,6 @@ pandas
 # extras --------------------------------------
 thop  # FLOPS computation
 pycocotools>=2.0  # COCO mAP
-opencv-python
 
 # CPOP Server dependencies
 bson
