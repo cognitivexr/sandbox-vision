@@ -13,7 +13,8 @@ from util.timer import Timer
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
-def load_tensor_image(img, resize=(256, 832)):
+def load_tensor_image(img, resize=(256, 320)):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = img.astype(np.float32)
 
     if resize:
