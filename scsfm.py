@@ -1,16 +1,14 @@
 # %%
 import argparse
 import time
-
 import cv2
 import numpy as np
 import torch
 from skimage.transform import resize as imresize
-
 import models.scsfm as models
-from util.timer import Timer
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+device = torch.device(
+    "cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
 def load_tensor_image(img, resize=(256, 320)):
@@ -21,7 +19,8 @@ def load_tensor_image(img, resize=(256, 320)):
         img = imresize(img, resize).astype(np.float32)
 
     img = np.transpose(img, (2, 0, 1))
-    tensor_img = ((torch.from_numpy(img).unsqueeze(0) / 255 - 0.45) / 0.225).to(device)
+    tensor_img = ((torch.from_numpy(img).unsqueeze(
+        0) / 255 - 0.45) / 0.225).to(device)
     print(tensor_img.shape)
     return tensor_img
 
@@ -36,8 +35,10 @@ def prediction_to_visual(output, shape=(480, 640)):
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='res/dataset1.mp4', help='source')
-    parser.add_argument('--output', type=str, default='res/scfm.csv', help='source')
+    parser.add_argument('--source', type=str,
+                        default='res/dataset1.mp4', help='source')
+    parser.add_argument('--output', type=str,
+                        default='res/scfm.csv', help='source')
 
     opt = parser.parse_args()
     print(opt)
@@ -53,7 +54,6 @@ def main():
         source = opt.source
 
     cap = cv2.VideoCapture(source)
-    timer = Timer(opt.output)
     while True:
         then = time.time()
         ret, frame = cap.read()
@@ -63,16 +63,13 @@ def main():
         tgt_img = load_tensor_image(frame.copy(), (256, 832))
         print_duration(then, 'capture and convert')
         then = time.time()
-        timer.start()
         output = disp_net(tgt_img)
-        timer.stop()
         print_duration(then, 'inference')
 
         cv2.imshow('frame', frame)
         cv2.imshow('depth', prediction_to_visual(output))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    timer.release()
     cap.release()
 
 

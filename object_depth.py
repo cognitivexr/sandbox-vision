@@ -1,4 +1,5 @@
 # %%
+from typing import NamedTuple
 from adabins.infer import InferenceHelper
 import cv2
 import torch
@@ -21,6 +22,7 @@ def plot_one_box(x, img, color=(0, 255, 0), label=None, line_thickness=None):
         cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3,
                     [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
+
 
 cap = cv2.VideoCapture('res/dataset4.mp4')
 timer_yolo = Timer('res/yolo.csv')
@@ -50,7 +52,7 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
-        
+
     frame_rgb = frame[:, :, ::-1]
 
     # depth prediction
@@ -108,7 +110,7 @@ while True:
     depth_rgb = depth_img.copy()
     depth_rgb = (depth_rgb-min_depth)/(max_depth-min_depth)
     depth_rgb = cv2.cvtColor((depth_rgb*255).astype(np.uint8),
-                              cv2.COLOR_GRAY2BGR)
+                             cv2.COLOR_GRAY2BGR)
 
     # threshold results
     mask = results[:, 4] > threshold  # check confidence
@@ -117,7 +119,7 @@ while True:
     for x in results:
         if names[int(x[5])] not in ['keyboard', 'mouse', 'bottle']:
             continue
-        
+
         c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
 
         # average depth
