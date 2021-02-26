@@ -3,7 +3,6 @@ from typing import NamedTuple
 from adabins.infer import InferenceHelper
 import cv2
 import torch
-from util.timer import Timer
 import numpy as np
 from PIL import Image
 import random
@@ -24,9 +23,7 @@ def plot_one_box(x, img, color=(0, 255, 0), label=None, line_thickness=None):
                     [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 
-cap = cv2.VideoCapture('data/data1.mp4')
-timer_yolo = Timer('res/yolo.csv')
-timer_adabins = Timer('res/adabins.csv')
+cap = cv2.VideoCapture('data/data2.mp4')
 tl = 2
 
 threshold = 0.4
@@ -38,7 +35,7 @@ out = cv2.VideoWriter('depth_result.mp4', cv2.VideoWriter_fourcc(
 
 # %%
 # Model
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
+model = torch.hub.load('ultralytics/yolov5', 'yolov5x',
                        pretrained=True).autoshape()  # for PIL/cv2/np inputs and NMS
 
 names = model.module.names if hasattr(model, 'module') else model.names
@@ -52,25 +49,19 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
-    
+
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     # frame_rgb = frame[:, :, ::-1]
 
     # depth prediction
-    timer_adabins.start()
 
     img_pil = Image.fromarray(frame_rgb)
     centers, pred = inferHelper.predict_pil(img_pil)
     depth_img = pred[0, 0]
     depth_img = depth_img/10
-    timer_adabins.stop()
-    timer_adabins.print_summary()
 
     # bounding box detection
-    timer_yolo.start()
-    results = model(frame_rgb, size=320)  # includes NMS
-    timer_yolo.stop()
-    timer_yolo.print_summary()
+    results = model(frame_rgb)  # includes NMS
     results = results.xyxy[0].numpy()
 
     min_depth = np.min(depth_img)
@@ -113,5 +104,3 @@ while True:
     out.write(stack)
 cap.release()
 out.release()
-timer_adabins.release()
-timer_yolo.release()
