@@ -72,7 +72,7 @@ class InferenceHelper:
             self.max_depth = 10
             self.saving_factor = 1000  # used to save in 16 bit
             model = UnetAdaptiveBins.build(n_bins=256, min_val=self.min_depth, max_val=self.max_depth)
-            pretrained_path = "./res/weights/adabins_nyu.pt"
+            pretrained_path = "./data/weights/adabins_nyu.pt"
         elif dataset == 'kitti':
             raise ValueError("dataset can be only 'nyu' {}".format(dataset))
             self.min_depth = 1e-3

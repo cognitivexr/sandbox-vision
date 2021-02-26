@@ -24,7 +24,7 @@ def plot_one_box(x, img, color=(0, 255, 0), label=None, line_thickness=None):
                     [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 
-cap = cv2.VideoCapture('res/dataset4.mp4')
+cap = cv2.VideoCapture('data/data1.mp4')
 timer_yolo = Timer('res/yolo.csv')
 timer_adabins = Timer('res/adabins.csv')
 tl = 2
@@ -34,7 +34,7 @@ width = cap.get(3)   # float `width`
 height = cap.get(4)  # float `height`
 print(f'width: {width} height: {height}')
 out = cv2.VideoWriter('depth_result.mp4', cv2.VideoWriter_fourcc(
-    'm', 'p', '4', 'v'), 20, (1280, 480))
+    'm', 'p', '4', 'v'), 20, (1280, 360))
 
 # %%
 # Model
@@ -52,8 +52,9 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
-
-    frame_rgb = frame[:, :, ::-1]
+    
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # frame_rgb = frame[:, :, ::-1]
 
     # depth prediction
     timer_adabins.start()
@@ -72,39 +73,6 @@ while True:
     timer_yolo.print_summary()
     results = results.xyxy[0].numpy()
 
-    # visualisation
-    # heatmap = cv2.applyColorMap(
-    #     (depth_img*255).astype(np.uint8), cv2.COLORMAP_BONE)
-
-    # depth_img = cv2.cvtColor((depth_img*255).astype(np.uint8),
-    #                          cv2.COLOR_GRAY2BGR)
-
-    # mask = np.zeros((480, 640, 3), np.uint8)
-    # for x in results:
-    #     cv2.rectangle(depth_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    #     c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
-    #     cv2.rectangle(frame, c1, c2, (255, 255, 255), -1)
-    #     frame[c1[0]:c1[1], c2[0]:c2[1]] = (255, 255, 255)
-
-    # TODO use opencv functions
-    # heatmap foreground
-    # fg = cv2.bitwise_or(heatmap, heatmap, mask=mask)
-    # normal frame background
-    # mask = cv2.bitwise_not(mask)
-    # background = np.full(frame.shape, 255, dtype=np.uint8)
-    # bk = cv2.bitwise_or(background, background, mask=mask)
-    # final = cv2.bitwise_or(fg, bk)
-
-    # print(frame.shape)
-    # final = np.zeros((frame.shape), np.uint8)
-    # print(final.shape)
-    # print(mask.shape)
-
-    # depth_rgb = cv2.cvtColor((depth_img*255).astype(np.uint8),
-    #                          cv2.COLOR_GRAY2BGR)
-    # final[mask] = depth_rgb[mask]
-    # final[~mask] = frame[~mask]
-
     min_depth = np.min(depth_img)
     max_depth = np.max(depth_img)
     depth_rgb = depth_img.copy()
@@ -113,8 +81,8 @@ while True:
                              cv2.COLOR_GRAY2BGR)
 
     # threshold results
-    mask = results[:, 4] > threshold  # check confidence
-    results = results[:][mask]
+    # mask = results[:, 4] > threshold  # check confidence
+    # results = results # [:][mask]
 
     for x in results:
         if names[int(x[5])] not in ['keyboard', 'mouse', 'bottle']:
@@ -123,7 +91,7 @@ while True:
         c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
 
         # average depth
-        mask = np.zeros((480, 640), np.uint8)
+        mask = np.zeros((360, 640), np.uint8)
         cv2.rectangle(mask, c1, c2, (1), -1)
         mask = mask == 1
         mean = np.mean(depth_img[mask])*10

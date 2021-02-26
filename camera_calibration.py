@@ -1,12 +1,16 @@
 # %%
-import random
-import torch
-from math import pi, tan
+import scsfm
+import argparse
+import time
 import cv2
 import numpy as np
-from numpy.linalg import inv
-import matplotlib.pyplot as plt
-import pandas as pd
+import torch
+from skimage.transform import resize as imresize
+import random
+from math import pi, tan
+# from numpy.linalg import inv
+# import matplotlib.pyplot as plt
+# import pandas as pd
 
 ###########################
 # VISUALIZATION FUNCTIONS #
@@ -31,10 +35,12 @@ def draw(frame, imgpts):
     # corner = corners[0].ravel()
     imgpts = np.int32(imgpts).reshape(-1, 2)
     # draw ground floor in green
-    frame = cv2.drawContours(frame, [imgpts[:4]], -1, (0, 255, 0), -3)
+    frame = cv2.drawContours(frame, [imgpts[:4]],
+                             -1, (0, 255, 0), -3)
     # draw pillars in blue color
     for i, j in zip(range(4), range(4, 8)):
-        frame = cv2.line(frame, tuple(imgpts[i]), tuple(imgpts[j]), (255), 1)
+        frame = cv2.line(frame, tuple(imgpts[i]),
+                         tuple(imgpts[j]), (255), 1)
     # draw top layer in red color
     frame = cv2.drawContours(frame, [imgpts[4:]], -1, (0, 0, 255), 1)
     return frame
@@ -43,7 +49,7 @@ def draw(frame, imgpts):
 ####################
 # FRAME PARAMETERS #
 ####################
-frame = cv2.imread('data/blob/blob21.jpg')
+frame = cv2.imread('data/data.png')
 height, width, channels = frame.shape
 print(f'width: {width} height: {height} channels: {channels}')
 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -112,8 +118,8 @@ blobParams.maxThreshold = 255
 
 # Filter by Area.
 blobParams.filterByArea = True
-blobParams.minArea = 10     # minArea may be adjusted to suit for your experiment
-blobParams.maxArea = 100   # maxArea may be adjusted to suit for your experiment
+blobParams.minArea = 1
+blobParams.maxArea = 100
 
 # Filter by Circularity
 blobParams.filterByCircularity = True
@@ -303,3 +309,70 @@ for x in points:
                 [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 cv2.imwrite('res/blobs.png', blob_frame)
+
+
+device = torch.device(
+    "cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+
+def load_tensor_image(img, resize=(256, 320)):
+
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = img.astype(np.float32)
+
+    if resize:
+        img = imresize(img, resize)
+
+    img = np.transpose(img, (2, 0, 1))
+    tensor_img = ((torch.from_numpy(img).unsqueeze(
+        0) / 255 - 0.45) / 0.225).to(device)
+    print(f'tensor shape {tensor_img.shape}')
+    return tensor_img
+
+
+def prediction_to_visual(output, shape=(360, 640)):
+    pred_disp = output.cpu().numpy()[0, 0]
+    img = 1 / pred_disp
+    img = imresize(img, shape).astype(np.float32)
+    return img
+
+
+@torch.no_grad()
+def predict_depth():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', type=str,
+                        default='res/dataset1.mp4', help='source')
+    parser.add_argument('--output', type=str,
+                        default='res/scfm.csv', help='source')
+    opt = parser.parse_args()
+    print(opt)
+
+    ################
+    # Load DispNet #
+    ################
+    disp_net = scsfm.DispResNet(18, False).to(device)
+    weights = torch.load('data/weights/scfm-nyu2-test.pth.tar')
+    disp_net.load_state_dict(weights['state_dict'])
+    disp_net.eval()
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # cap = cv2.VideoCapture('data/data2.mp4')
+    # while True:
+    then = time.time()
+    frame_rgb = frame_rgb[:, 30:510]
+    tgt_img = load_tensor_image(frame_rgb.copy())
+    print_duration(then, 'capture and convert')
+    then = time.time()
+    output = disp_net(tgt_img)
+    print_duration(then, 'inference')
+
+    cv2.imshow('frame', frame_rgb)
+    cv2.imshow('depth', prediction_to_visual(output))
+    cv2.waitKey(-1)
+
+
+def print_duration(then, prefix=''):
+    print(prefix, 'took %.2f ms' % ((time.time() - then) * 1000))
+
+
+predict_depth()
