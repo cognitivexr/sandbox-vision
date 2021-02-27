@@ -352,6 +352,7 @@ class ObjectDetector:
         results = self.model(frame_rgb, 320 + 32 * 4)  # includes NMS
 
         person_coordinates = []
+        labels = []
         points = results.xyxy[0].cpu().numpy()
         for x in points:
             label = self.names[int(x[5])]
@@ -360,6 +361,7 @@ class ObjectDetector:
                 b = np.array([x[2], x[1]])
                 c = np.array([x[2], x[3]])
                 d = np.array([x[0], x[3]])
+                labels.append(label)
                 person_coordinates.append([a, b, c, d])
             if viz:
                 c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
@@ -376,6 +378,7 @@ class ObjectDetector:
         person_coordinates = np.array(person_coordinates)
         positions = []
         heights = []
+        widths = []
         for person_coordinate in person_coordinates:
             point0 = self.to_coordinate_plane(person_coordinate[3])
             point1 = self.to_coordinate_plane(person_coordinate[2])
@@ -394,7 +397,8 @@ class ObjectDetector:
             up_vector = np.array([0, 0, -1])
 
             # calculate normal vector of plane
-            bounding_span = bounding_span / norm(bounding_span)
+            width = norm(bounding_span)
+            bounding_span = bounding_span / width
             plane_normal = np.cross(bounding_span, up_vector)
 
             # to unit vector
@@ -409,26 +413,28 @@ class ObjectDetector:
             ray_dir_chessboard = np.matmul(
                 self.rot_chessboard_cam, ray_dir_cam)
             ray_origin = self.pos_cam_chessboard.T[0]
-            point1 = self.get_intersection(ray_origin, ray_dir_chessboard,
-                                           plane_normal, plane_d)
+            point1 = self.get_intersection(ray_origin, ray_dir_chessboard, plane_normal, plane_d)
 
             height = point0[2] - point1[2]
+
             if viz:
                 points, _ = cv2.projectPoints(point1, self.rvec, self.tvec, self.camera_matrix, None)
                 draw_point(frame, points[0][0], (0, 255, 255))
-                print(f'height={height} pos={pos}')
+                print(f'height={height}, width={width}, pos={pos}')
 
             positions.append(pos)
             heights.append(height)
+            widths.append(width)
+
         # positions = np.array(positions)
         # heights = np.array(heights)
-        return frame, positions, heights
+        return frame, labels, positions, heights, widths
 
 
 def main():
     object_detector = ObjectDetector()
     frame = cv2.imread('data/calib-and-test/frame_1920x1080.jpg')
-    object_detector.init_camera_parameters(frame, viz=False)
+    object_detector.init_camera_parameters(frame, viz=True)
 
     width = 640
     height = 360
@@ -437,7 +443,7 @@ def main():
     cap = cv2.VideoCapture('data/calib-and-test/vid_640x360.mp4')
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    fps = cap.get(15)
+    fps = cap.get(cv2.CAP_PROP_FPS)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter('res/data.mp4', fourcc, fps, (width, height))
@@ -446,8 +452,8 @@ def main():
         if not ret:
             break
         then = time.time()
-        frame, pos, height = object_detector.estimate_pose(frame, viz=True)
-        print(pos, height)
+        frame, labels, pos, height, width = object_detector.estimate_pose(frame, viz=True)
+        print(labels, pos, height)
         print('estimation took %.2f ms' % ((time.time() - then) * 1000))
         out.write(frame)
         cv2.imshow('frame', frame)
