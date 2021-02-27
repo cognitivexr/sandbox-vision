@@ -417,8 +417,9 @@ class ObjectDetector:
                 points, _ = cv2.projectPoints(point1, self.rvec, self.tvec, self.camera_matrix, None)
                 draw_point(frame, points[0][0], (0, 255, 255))
                 print(f'height={height} pos={pos}')
-                positions.append(pos)
-                heights.append(height)
+
+            positions.append(pos)
+            heights.append(height)
         # positions = np.array(positions)
         # heights = np.array(heights)
         return frame, positions, heights
@@ -427,7 +428,7 @@ class ObjectDetector:
 def main():
     object_detector = ObjectDetector()
     frame = cv2.imread('data/calib-and-test/frame_1920x1080.jpg')
-    object_detector.init_camera_parameters(frame)
+    object_detector.init_camera_parameters(frame, viz=False)
 
     width = 640
     height = 360
@@ -445,7 +446,7 @@ def main():
         if not ret:
             break
         then = time.time()
-        frame, pos, height = object_detector.estimate_pose(frame)
+        frame, pos, height = object_detector.estimate_pose(frame, viz=True)
         print(pos, height)
         print('estimation took %.2f ms' % ((time.time() - then) * 1000))
         out.write(frame)
