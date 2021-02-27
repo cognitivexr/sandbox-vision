@@ -34,8 +34,8 @@ class CPOPServer(FuncThread):
 
         capture = get_capture_device()
 
-        width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
-        height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        width = config.CAMERA_WIDTH
+        height = config.CAMERA_HEIGHT
         LOG.info('initializing camera matrix to dimensions: %d %d', width, height)
         object_detector.init_camera_matrix((height, width))
 
