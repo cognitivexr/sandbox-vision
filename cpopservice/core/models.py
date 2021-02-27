@@ -1,7 +1,15 @@
+import abc
+
 import bson
 
 
-class BaseModel(object):
+class Serializable(abc.ABC):
+
+    def to_bson(self):
+        raise NotImplementedError
+
+
+class BaseModel(Serializable):
     def __init__(self, params={}):
         self.__dict__ = params
 

@@ -1,30 +1,37 @@
-import cv2
-import torch
-from time import time
-from PIL import Image
-from adabins.infer import InferenceHelper
-from util.timer import Timer
+import logging
+import time
+
+from object_detector import ObjectDetector
+
+LOG = logging.getLogger(__name__)
 
 
-def run_capture_loop(capture, timer=None, result_queue=None, headless=True):
-    # infer_helper = InferenceHelper()
+def run_capture_loop(capture, object_detector: ObjectDetector, result_queue):
+    LOG.info('running capture loop...')
+
     while True:
+        then = time.time()
         ret, frame = capture.read()
-        frame_rgb = frame[:, :, ::-1]
-        im_pil = Image.fromarray(frame_rgb)
-        timer and timer.start()
-        # centers, pred = inferHelper.predict_pil(im_pil)
-        timer and timer.stop()
-        # depth_img = pred[0, 0]/10
-        if result_queue:
+        timestamp = time.time()  # frame timestamp
+
+        _, labels, positions, heights, widths = object_detector.estimate_pose(frame, viz=False)
+
+        if LOG.isEnabledFor(logging.DEBUG):
+            LOG.info('object_detection took %.4f s', time.time() - then)
+
+        for i in range(len(labels)):
+            position = positions[i]
+            label = labels[i]
+            height = float(heights[i])
+            width = float(widths[i])
+
             message = {
-                'Timestamp': time(),
-                'Type': 'person',
-                'Position': {'X': 1, 'Y': 2, 'Z': 3},
-                'Shape': []
+                'Timestamp': timestamp,
+                'Type': label,
+                'Position': {'X': float(position[0]), 'Y': float(position[1]), 'Z': float(position[2])},
+                'Shape': [{'X': width, 'Y': height, 'Z': 0.0}]
             }
+
+            LOG.debug('queueing message %s', message)
+
             result_queue.put(message)
-        if not headless:
-            cv2.imshow('frame', depth_img)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break

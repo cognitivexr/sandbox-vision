@@ -1,6 +1,9 @@
 import logging
+
 import paho.mqtt.client as mqtt
+
 from cpopservice import config
+from cpopservice.core.models import Serializable
 
 LOG = logging.getLogger(__name__)
 
@@ -32,6 +35,6 @@ class CPOPPublisherMQTT(CPOPPublisher):
         self.client = mqtt.Client()
         self.client.connect(config.BROKER_HOST, config.BROKER_PORT)
 
-    def publish_event(self, event):
-        LOG.info('Publishing message to topic %s: %s' % (config.MQTT_TOPIC_NAME, event))
+    def publish_event(self, event: Serializable):
+        LOG.debug('publishing message to topic %s: %s', config.MQTT_TOPIC_NAME, event)
         self.client.publish(config.MQTT_TOPIC_NAME, event.to_bson())
