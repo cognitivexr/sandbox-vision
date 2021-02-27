@@ -376,7 +376,8 @@ class ObjectDetector:
                             [225, 255, 255], thickness=tf,
                             lineType=cv2.LINE_AA)
         person_coordinates = np.array(person_coordinates)
-
+        positions = []
+        heights = []
         for person_coordinate in person_coordinates:
             point0 = self.to_coordinate_plane(person_coordinate[3])
             point1 = self.to_coordinate_plane(person_coordinate[2])
@@ -419,7 +420,11 @@ class ObjectDetector:
                     point1, self.rvec, self.tvec, self.camera_matrix, None)
                 draw_point(frame, points[0][0], (0, 255, 255))
                 print(f'height={height} pos={pos}')
-        return frame, pos, height
+                positions.append(pos)
+                heights.append(height)
+        positions = np.array(positions)
+        heights = np.array(heights)
+        return frame, positions, heights
 
 
 object_detector = ObjectDetector()
