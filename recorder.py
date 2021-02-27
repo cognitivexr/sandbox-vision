@@ -14,7 +14,6 @@ print(
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter('res/data.mp4', fourcc, fps, (width, height))
 
-count = 0
 while True:
     ret, frame = cap.read()
     if not ret:

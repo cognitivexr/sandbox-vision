@@ -42,7 +42,7 @@ class ObjectDepthDetector:
         img = imresize(img, shape).astype(np.float32)
         return img
 
-    def bounding_to_visual(self, depth, depth_map, points):
+    def bounding_to_visual(self, depth, depth_map, points, constant):
         print(depth.shape)
         print(depth_map.shape)
         for x in points:
@@ -59,7 +59,7 @@ class ObjectDepthDetector:
             c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
             cv2.rectangle(depth, c1, c2, (0, 0, 0), -1, cv2.LINE_AA)  # filled
             text = label+' ' + \
-                str(depth_map[round(center[1]/1.40625)]
+                str(constant*depth_map[round(center[1]/1.40625)]
                     [round(center[0]/1.40625)])
             cv2.circle(depth, (center[0], center[1]), 3, (0, 255, 0), -1)
             cv2.putText(depth, text, (c1[0], c1[1] - 2), 0, tl / 3,
@@ -121,7 +121,7 @@ class ObjectDepthDetector:
             depth_rgb = np.uint8((1-prediction)*255)
             depth_rgb = cv2.cvtColor((depth_rgb*255).astype(np.uint8),
                                      cv2.COLOR_GRAY2BGR)
-            depth_rgb = self.bounding_to_visual(depth_rgb, prediction, points)
+            depth_rgb = self.bounding_to_visual(depth_rgb, prediction, points, 10)
             cv2.imshow('depth with bounding', depth_rgb)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -383,9 +383,11 @@ class CameraCalibration:
 
 
 if __name__ == '__main__':
-    frame = cv2.imread('data/blob21.jpg')
-    calibration = CameraCalibration()
-    calibration.find_extrinsic_parameters(frame)
+    # for root, dirs, files in os.walk('./data/calib-set'):
+    #     #frame = cv2.imread('data/blob21.jpg')
+    #     frame = cv2.imread('data/blob21.jpg')
+    #     calibration = CameraCalibration()
+    #     calibration.find_extrinsic_parameters(frame)
 
     object_depth = ObjectDepthDetector()
     cap = cv2.VideoCapture('data/data1.mp4')

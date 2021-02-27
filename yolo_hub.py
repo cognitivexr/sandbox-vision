@@ -4,18 +4,18 @@ from util.timer import Timer
 import numpy as np
 
 # Model
-model = torch.hub.load('ultralytics/yolov5', 'yolov5x',
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
                        pretrained=True).autoshape()  # for PIL/cv2/np inputs and NMS
 
 # Inference
-cap = cv2.VideoCapture('res/dataset2.mp4')
+cap = cv2.VideoCapture('data/data1.mp4')
 timer = Timer()
 while True:
     ret, frame = cap.read()
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)[:, :, ::-1]
     print(f'min: {np.min(frame_rgb)} max: {np.max(frame_rgb)}')
     timer.start()
-    results = model(frame_rgb, size=320)  # includes NMS
+    results = model(frame_rgb, size=320+32*10)  # includes NMS
     timer.stop()
     timer.print_summary()
     points = results.xyxy[0].numpy()
@@ -27,7 +27,6 @@ while True:
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
     cv2.imshow('frame', frame)
 
-    
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 cap.release()
