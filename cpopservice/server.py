@@ -80,6 +80,12 @@ def get_capture_device():
     # source = 'data/calib-and-test/vid_640x360.mp4'
 
     capture = cv2.VideoCapture(source)
+
+    width = config.CAMERA_WIDTH
+    height = config.CAMERA_HEIGHT
+    capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
     return capture
 
 
