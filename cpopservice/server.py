@@ -65,10 +65,16 @@ def get_object_detector() -> ObjectDetector:
     object_detector = ObjectDetector()
 
     LOG.info('initializing camera parameters')
-    frame = capture_from_vid(source=0, width=1920, height=1080)
-    # frame = cv2.imread('data/calib-and-test/frame_1920x1080.jpg')
+    if config.CALIBRATE_FRAME and os.path.isfile(config.CALIBRATE_FRAME):
+        LOG.info('using existing frame for calibration %s', config.CALIBRATE_FRAME)
+        frame = cv2.imread(config.CALIBRATE_FRAME)
+    else:
+        LOG.info('capturing frame from source')
+        frame = capture_from_vid(source=0, width=1920, height=1080)
 
     object_detector.init_camera_parameters(frame, viz=False)
+
+    LOG.info('camera parameters (rvec: %s, tvec: %s)', object_detector.rvec, object_detector.tvec)
 
     return object_detector
 

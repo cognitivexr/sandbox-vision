@@ -29,7 +29,7 @@ def run_capture_loop(capture, object_detector: ObjectDetector, result_queue):
                 'Timestamp': timestamp,
                 'Type': label,
                 'Position': {'X': float(position[0]), 'Y': float(position[1]), 'Z': float(position[2])},
-                'Shape': [{'X': width, 'Y': height, 'Z': 0.0}]
+                'Shape': [{'X': width, 'Y': 0.0, 'Z': height}]
             }
 
             LOG.debug('queueing message %s', message)
