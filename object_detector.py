@@ -1,9 +1,12 @@
+import random
+import time
+from math import tan, pi
+
 import cv2
 import numpy as np
-from math import tan, pi
 import torch
-import random
 from numpy.linalg import norm
+
 
 ###########################
 # VISUALIZATION FUNCTIONS #
@@ -49,8 +52,7 @@ def draw(frame, imgpts):
 
 class ObjectDetector:
 
-    def __init__(self, hfov=70.42, vfov=43.3, pixel_size=None,
-                 focal_mm=3.67):
+    def __init__(self, hfov=70.42, vfov=43.3, pixel_size=None, focal_mm=3.67):
         r""" Initializes CameraCalibration module with sensor information
 
         Either hfov and vfov must be given or the pixel_size
@@ -74,12 +76,11 @@ class ObjectDetector:
         self.focal_mm = focal_mm
         # Model
         # For PIL/cv2/np inputs and NMS
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
-                                    pretrained=True).autoshape()
-        self.names = self.model.module.names if hasattr(
-            self.model, 'module') else self.model.names
-        self.colors = [[random.randint(0, 255)
-                        for _ in range(3)] for _ in self.names]
+        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).autoshape()
+        self.model.to(self.device)
+        self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
+        self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
 
     ############################
     # INITIALIZATION FUNCTIONS #
@@ -94,14 +95,14 @@ class ObjectDetector:
         # circle_diameter = 30
         # board_width = (column_count-1)*spacing
         # board_height = (row_count-1)*spacing
-        blob_board = np.zeros((self.column_count*self.row_count, 3))
+        blob_board = np.zeros((self.column_count * self.row_count, 3))
         idx = 0
         for column in range(self.column_count):
             for row in range(self.row_count):
                 x = column * spacing
                 y = row * spacing
                 blob_board[idx] = (x, y, 0)  # TODO check
-                idx = idx+1
+                idx = idx + 1
         return blob_board
 
     def get_blob_detector(self):
@@ -158,19 +159,19 @@ class ObjectDetector:
         height = shape[0]
         width = shape[1]
 
-        c_x = width/2
-        c_y = height/2
+        c_x = width / 2
+        c_y = height / 2
 
         if self.hfov and self.vfov:
             # From field of view
-            f_x = c_x/tan(self.hfov*0.5*pi/180)
-            f_y = c_y/tan(self.vfov*0.5*pi/180)
+            f_x = c_x / tan(self.hfov * 0.5 * pi / 180)
+            f_y = c_y / tan(self.vfov * 0.5 * pi / 180)
         elif self.pixel_size:
             # From sensor width and height
-            sensor_width_mm = self.focal_mm*self.pixel_size
-            sensor_height_mm = self.focal_mm*self.pixel_size
-            f_x = (self.focal_mm/sensor_width_mm)*width
-            f_y = (self.focal_mm/sensor_height_mm)*height
+            sensor_width_mm = self.focal_mm * self.pixel_size
+            sensor_height_mm = self.focal_mm * self.pixel_size
+            f_x = (self.focal_mm / sensor_width_mm) * width
+            f_y = (self.focal_mm / sensor_height_mm) * height
         self.camera_matrix = np.array([[f_x, 0, c_x],
                                        [0, f_y, c_y],
                                        [0, 0, 1]])
@@ -202,7 +203,7 @@ class ObjectDetector:
         # extract image points from keypoints
         image_points = np.array([
             [keypoints[idx].pt[0], keypoints[idx].pt[1]]
-            for idx in range(self.column_count*self.row_count)])
+            for idx in range(self.column_count * self.row_count)])
 
         # sort image points after x and y
         sorted_indexes = np.lexsort((image_points[:, 0], image_points[:, 1]))
@@ -226,13 +227,13 @@ class ObjectDetector:
         if viz:
             axis = np.float32(
                 [[0, 0, 0],  # origin
-                 [40*5, 0, 0],  # right axis
-                 [40*5, 40*3, 0],
-                 [0, 40*3, 0],  # left axis
-                 [0, 0, -40*3],
-                 [40*5, 0, -40*3],
-                 [40*5, 40*3, -40*3],
-                 [0, 40*3, -40*3]]).reshape(-1, 3)
+                 [40 * 5, 0, 0],  # right axis
+                 [40 * 5, 40 * 3, 0],
+                 [0, 40 * 3, 0],  # left axis
+                 [0, 0, -40 * 3],
+                 [40 * 5, 0, -40 * 3],
+                 [40 * 5, 40 * 3, -40 * 3],
+                 [0, 40 * 3, -40 * 3]]).reshape(-1, 3)
             projected_points, _ = cv2.projectPoints(
                 axis, rvec, tvec, self.camera_matrix, None)
             blob_frame = draw(blob_frame, projected_points)
@@ -262,7 +263,7 @@ class ObjectDetector:
                 cv2.putText(blob_frame, f'{idx}',
                             tuple(point.astype(int)),
                             font, 0.3, (255, 255, 255), 1, cv2.LINE_AA)
-                idx = idx+1
+                idx = idx + 1
             cv2.imwrite('res/blobs.png', blob_frame)
         self.rvec = rvec
         self.tvec = tvec
@@ -288,12 +289,12 @@ class ObjectDetector:
         x_coords = [p.pt[0] for p in keypoints]
         y_coords = [p.pt[1] for p in keypoints]
 
-        while len(keypoints) > self.row_count*self.column_count:
+        while len(keypoints) > self.row_count * self.column_count:
             _len = len(keypoints)
-            centroid_x = sum(x_coords)/_len
-            centroid_y = sum(y_coords)/_len
-            index = np.argmax([(x_coords[i]-centroid_x)**2 +
-                               (y_coords[i]-centroid_y)**2
+            centroid_x = sum(x_coords) / _len
+            centroid_y = sum(y_coords) / _len
+            index = np.argmax([(x_coords[i] - centroid_x) ** 2 +
+                               (y_coords[i] - centroid_y) ** 2
                                for i in range(_len)])
             keypoints.pop(index)
             x_coords.pop(index)
@@ -306,12 +307,12 @@ class ObjectDetector:
     def get_intersection(self, ray_origin, ray_dir, plane, plane_d):
         r""" Returns the 3D intersection point
         """
-        plane_dot_ray = plane[0]*ray_dir[0] + \
-            plane[1]*ray_dir[1] + plane[2]*ray_dir[2] + plane_d
+        plane_dot_ray = plane[0] * ray_dir[0] + \
+                        plane[1] * ray_dir[1] + plane[2] * ray_dir[2] + plane_d
         if abs(plane_dot_ray) > 0:
-            plane_dot_ray_origin = ray_origin[0]*plane[0] + \
-                ray_origin[1]*plane[1] + ray_origin[2]*plane[2] + plane_d
-            return ray_origin - ray_dir * (plane_dot_ray_origin/plane_dot_ray)
+            plane_dot_ray_origin = ray_origin[0] * plane[0] + \
+                                   ray_origin[1] * plane[1] + ray_origin[2] * plane[2] + plane_d
+            return ray_origin - ray_dir * (plane_dot_ray_origin / plane_dot_ray)
 
     def to_coordinate_plane(self, image_point):
         r""" maps a image point to a coordinate
@@ -339,9 +340,8 @@ class ObjectDetector:
         # To find the intersection between the ray and the plane of the
         # chessboard, we compute the depth 'd' for which the Z coordinate
         # of P(d) is equal to zero
-        d_intersection = -self.pos_cam_chessboard[2]/ray_dir_chessboard[2]
-        intersection_point = self.pos_cam_chessboard.T[0] + \
-            d_intersection[0]*ray_dir_chessboard
+        d_intersection = -self.pos_cam_chessboard[2] / ray_dir_chessboard[2]
+        intersection_point = self.pos_cam_chessboard.T[0] + d_intersection[0] * ray_dir_chessboard
         return intersection_point
 
     def estimate_pose(self, frame, viz=True):
@@ -349,10 +349,10 @@ class ObjectDetector:
             tl = 2
             tf = 1
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self.model(frame_rgb, 320)  # includes NMS
+        results = self.model(frame_rgb, 320 + 32 * 4)  # includes NMS
 
         person_coordinates = []
-        points = results.xyxy[0].numpy()
+        points = results.xyxy[0].cpu().numpy()
         for x in points:
             label = self.names[int(x[5])]
             if label == 'person':
@@ -365,13 +365,11 @@ class ObjectDetector:
                 c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
                 color = self.colors[int(x[5])]
                 draw_point(frame, x[2:], color)
-                cv2.rectangle(frame, c1, c2, color,
-                              thickness=tl, lineType=cv2.LINE_AA)
-                t_size = cv2.getTextSize(
-                    label, 0, fontScale=tl / 3, thickness=tf)[0]
+                cv2.rectangle(frame, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
+                t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
                 c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
                 cv2.rectangle(frame, c1, c2, (0, 0, 0), -
-                              1, cv2.LINE_AA)  # filled
+                1, cv2.LINE_AA)  # filled
                 cv2.putText(frame, label, (c1[0], c1[1] - 2), 0, tl / 3,
                             [225, 255, 255], thickness=tf,
                             lineType=cv2.LINE_AA)
@@ -381,7 +379,7 @@ class ObjectDetector:
         for person_coordinate in person_coordinates:
             point0 = self.to_coordinate_plane(person_coordinate[3])
             point1 = self.to_coordinate_plane(person_coordinate[2])
-            pos = (point0+point1)/2
+            pos = (point0 + point1) / 2
             if viz:
                 points, _ = cv2.projectPoints(point0,
                                               self.rvec, self.tvec,
@@ -392,66 +390,73 @@ class ObjectDetector:
                                                 self.camera_matrix, None)
                 draw_point(frame, points[0][0], (255, 255, 255))
 
-            bounding_span = point1-point0
+            bounding_span = point1 - point0
             up_vector = np.array([0, 0, -1])
 
             # calculate normal vector of plane
-            bounding_span = bounding_span/norm(bounding_span)
+            bounding_span = bounding_span / norm(bounding_span)
             plane_normal = np.cross(bounding_span, up_vector)
 
             # to unit vector
-            plane_normal = plane_normal/norm(plane_normal)
+            plane_normal = plane_normal / norm(plane_normal)
             plane_d = -np.dot(plane_normal, point1)
 
-            plane_point = (person_coordinate[0]+person_coordinate[1])/2
+            plane_point = (person_coordinate[0] + person_coordinate[1]) / 2
             plane_norm_dir = cv2.undistortPoints(
                 plane_point, self.camera_matrix, None)[0][0]
             ray_dir_cam = np.array([plane_norm_dir[0], plane_norm_dir[1], 1])
-            ray_dir_cam = ray_dir_cam/norm(ray_dir_cam)
+            ray_dir_cam = ray_dir_cam / norm(ray_dir_cam)
             ray_dir_chessboard = np.matmul(
                 self.rot_chessboard_cam, ray_dir_cam)
             ray_origin = self.pos_cam_chessboard.T[0]
             point1 = self.get_intersection(ray_origin, ray_dir_chessboard,
                                            plane_normal, plane_d)
 
-            height = point0[2]-point1[2]
+            height = point0[2] - point1[2]
             if viz:
-                points, _ = cv2.projectPoints(
-                    point1, self.rvec, self.tvec, self.camera_matrix, None)
+                points, _ = cv2.projectPoints(point1, self.rvec, self.tvec, self.camera_matrix, None)
                 draw_point(frame, points[0][0], (0, 255, 255))
                 print(f'height={height} pos={pos}')
                 positions.append(pos)
                 heights.append(height)
-        positions = np.array(positions)
-        heights = np.array(heights)
+        # positions = np.array(positions)
+        # heights = np.array(heights)
         return frame, positions, heights
 
 
-object_detector = ObjectDetector()
-frame = cv2.imread('data/calib-and-test/frame_1920x1080.jpg')
-object_detector.init_camera_parameters(frame)
+def main():
+    object_detector = ObjectDetector()
+    frame = cv2.imread('data/calib-and-test/frame_1920x1080.jpg')
+    object_detector.init_camera_parameters(frame)
 
-width = 640
-height = 360
-# initialize object_detector with new height/width
-object_detector.init_camera_matrix((height, width))
-cap = cv2.VideoCapture('data/calib-and-test/vid_640x360.mp4')
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-fps = cap.get(cv2.CAP_PROP_FPS)
+    width = 640
+    height = 360
+    # initialize object_detector with new height/width
+    object_detector.init_camera_matrix((height, width))
+    cap = cv2.VideoCapture('data/calib-and-test/vid_640x360.mp4')
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    fps = cap.get(15)
 
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter('res/data.mp4', fourcc, fps, (width, height))
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-    frame, pos, height = object_detector.estimate_pose(frame)
-    out.write(frame)
-    cv2.imshow('frame', frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter('res/data.mp4', fourcc, fps, (width, height))
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        then = time.time()
+        frame, pos, height = object_detector.estimate_pose(frame)
+        print(pos, height)
+        print('estimation took %.2f ms' % ((time.time() - then) * 1000))
+        out.write(frame)
+        cv2.imshow('frame', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-# Release everything if job is finished
-cap.release()
-out.release()
+    # Release everything if job is finished
+    cap.release()
+    out.release()
+
+
+if __name__ == '__main__':
+    main()
