@@ -180,6 +180,7 @@ class ObjectDetector:
     def init_camera_parameters(self, frame, viz=True):
         blob_board = self.get_blob_board()
         blob_detector = self.get_blob_detector()
+        blob_frame = None
         self.init_camera_matrix(frame.shape)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         keypoints = blob_detector.detect(gray)
@@ -259,12 +260,12 @@ class ObjectDetector:
             idx = 0
             for point in image_points:
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                print(point)
+                # print(point)
                 cv2.putText(blob_frame, f'{idx}',
                             tuple(point.astype(int)),
                             font, 0.3, (255, 255, 255), 1, cv2.LINE_AA)
                 idx = idx + 1
-            cv2.imwrite('res/blobs.png', blob_frame)
+            #cv2.imwrite('res/blobs.png', blob_frame)
         self.rvec = rvec
         self.tvec = tvec
         self.rot_cam_chessboard = cv2.Rodrigues(rvec)[0]
@@ -272,6 +273,8 @@ class ObjectDetector:
         self.t_cam_chessboard = tvec
         self.pos_cam_chessboard = np.matmul(
             -self.rot_chessboard_cam, self.t_cam_chessboard)
+
+        return blob_frame
 
     ###################
     # BOARD DETECTION #
@@ -434,7 +437,8 @@ class ObjectDetector:
 def main():
     object_detector = ObjectDetector()
     frame = cv2.imread('data/calib-and-test/frame_1920x1080.jpg')
-    object_detector.init_camera_parameters(frame, viz=True)
+    blob_frame = object_detector.init_camera_parameters(frame, viz=True)
+    cv2.imwrite('res/blobs.jpg', blob_frame)
 
     width = 640
     height = 360
