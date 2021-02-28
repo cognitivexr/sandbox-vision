@@ -1,11 +1,12 @@
 import abc
+import json
 
 import bson
 
 
 class Serializable(abc.ABC):
 
-    def to_bson(self):
+    def to_bson(self) -> bytes:
         raise NotImplementedError
 
 
@@ -13,8 +14,9 @@ class BaseModel(Serializable):
     def __init__(self, params={}):
         self.__dict__ = params
 
-    def to_bson(self):
-        result = bson.dumps(self.__dict__)
+    def to_bson(self) -> bytes:
+        # result = bson.dumps(self.__dict__)
+        result = json.dumps(self.__dict__).encode('UTF-8')
         return result
 
     @classmethod
