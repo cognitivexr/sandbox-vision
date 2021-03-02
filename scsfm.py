@@ -60,7 +60,7 @@ def main():
         ret, frame = cap.read()
         if not ret:
             break
-        
+
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame_rgb = frame_rgb[:, 30:510]
         tgt_img = load_tensor_image(frame_rgb.copy(), (256, 320))
@@ -76,7 +76,7 @@ def main():
             break
         prediction = np.uint8((1-prediction)*255)
         depth_rgb = cv2.cvtColor((prediction*255).astype(np.uint8),
-                             cv2.COLOR_GRAY2BGR)
+                                 cv2.COLOR_GRAY2BGR)
         out.write(depth_rgb)
     out.release()
     cap.release()
@@ -88,5 +88,3 @@ def print_duration(then, prefix=''):
 
 if __name__ == '__main__':
     main()
-
-# %%
